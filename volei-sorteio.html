@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vôlei 4×4 — Sorteio de Times</title>
+  <style>
+    :root {
+      --primary: #1a56db;
+      --primary-dark: #1e429f;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --female: #ec4899;
+      --male: #3b82f6;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1a56db 60%, #3b82f6 100%);
+      color: #fff;
+      padding: 1.75rem 2rem 1.5rem;
+      text-align: center;
+    }
+    header h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.5px; }
+    header p { margin-top: .35rem; opacity: .8; font-size: .9rem; }
+
+    /* ── Layout ── */
+    .container { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: .25rem; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; }
+    .tab-btn {
+      padding: .55rem 1.2rem; border: none; background: none; cursor: pointer;
+      font-size: .875rem; font-weight: 600; color: var(--muted);
+      border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .15s;
+      display: flex; align-items: center; gap: .35rem;
+    }
+    .tab-btn:hover { color: var(--primary); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Cards ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: .75rem; padding: 1.25rem; margin-bottom: 1rem; }
+    .card-title { font-size: .95rem; font-weight: 700; margin-bottom: .75rem; color: var(--text); }
+    .card-subtitle { font-size: .8rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.5; }
+
+    /* ── Buttons ── */
+    .btn { padding: .55rem 1.15rem; border: none; border-radius: .5rem; cursor: pointer; font-size: .85rem; font-weight: 700; transition: all .15s; display: inline-flex; align-items: center; gap: .4rem; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-ghost { background: #f8fafc; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: #f1f5f9; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #059669; transform: translateY(-1px); }
+    .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; }
+
+    /* ── Score Table ── */
+    .table-wrap { overflow-x: auto; border-radius: .5rem; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    thead th {
+      background: #f8fafc; padding: .65rem .5rem; text-align: center; font-weight: 700;
+      font-size: .75rem; border-bottom: 2px solid var(--border); white-space: nowrap;
+    }
+    thead th:first-child { text-align: left; padding-left: .9rem; min-width: 130px; }
+    tbody td { padding: .4rem .4rem; text-align: center; border-bottom: 1px solid #f1f5f9; }
+    tbody td:first-child { text-align: left; padding-left: .9rem; font-weight: 600; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #f8fafc; }
+    input[type="number"] {
+      width: 52px; padding: .3rem .2rem; border: 1px solid var(--border); border-radius: .35rem;
+      text-align: center; font-size: .8rem; font-weight: 600; transition: border-color .15s;
+    }
+    input[type="number"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,86,219,.1); }
+    .ws-cell { font-weight: 800; color: var(--primary); font-size: .875rem; }
+    .badge {
+      display: inline-block; padding: .1rem .45rem; border-radius: 9999px;
+      font-size: .65rem; font-weight: 700; margin-left: .3rem;
+    }
+    .badge-f { background: #fce7f3; color: var(--female); }
+    .badge-m { background: #dbeafe; color: var(--male); }
+    .lbl-fund { display: flex; flex-direction: column; align-items: center; gap: .15rem; }
+    .weight-tag { font-size: .65rem; color: #64748b; font-weight: 600; background: #f1f5f9; border-radius: 4px; padding: .05rem .3rem; }
+
+    /* ── Pots ── */
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1rem; }
+    .pot-card { border-radius: .75rem; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .pot-head {
+      padding: .7rem 1rem; display: flex; justify-content: space-between; align-items: center;
+      color: #fff; font-weight: 700; font-size: .875rem;
+    }
+    .pot-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 800; }
+    .pot-title { display: flex; align-items: center; gap: .5rem; }
+    .pot-weight { font-size: .7rem; opacity: .8; background: rgba(255,255,255,.2); padding: .1rem .45rem; border-radius: 9999px; }
+    .pot-row {
+      padding: .55rem 1rem; display: flex; align-items: center; justify-content: space-between;
+      font-size: .825rem; border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .pot-row-left { display: flex; align-items: center; gap: .5rem; font-weight: 600; color: #fff; }
+    .rank-dot { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .pot-score { font-weight: 800; color: #fff; font-size: .875rem; }
+    .note-small { font-size: .7rem; color: rgba(255,255,255,.7); margin-left: .2rem; }
+
+    /* ── Teams ── */
+    .balance-bar { background: var(--card); border: 1px solid var(--border); border-radius: .75rem; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; align-items: center; }
+    .b-stat { display: flex; flex-direction: column; gap: .15rem; }
+    .b-stat label { font-size: .7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .b-stat span { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+    .team-card { background: var(--card); border: 2px solid var(--border); border-radius: .75rem; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .team-head { padding: .7rem 1rem; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+    .team-name-txt { font-weight: 800; font-size: 1rem; }
+    .team-avg-txt { font-size: .78rem; opacity: .85; }
+    .team-bar-wrap { height: 5px; background: #f1f5f9; }
+    .team-bar-fill { height: 100%; transition: width .4s; }
+    .team-player-row { padding: .6rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); font-size: .85rem; }
+    .team-player-row:last-child { border-bottom: none; }
+    .tpr-left { display: flex; align-items: center; gap: .5rem; }
+    .tpr-name { font-weight: 600; }
+    .tpr-pot { font-size: .7rem; color: var(--muted); }
+    .tpr-score { font-weight: 700; color: var(--muted); font-size: .8rem; }
+
+    /* Pot gradient colors */
+    .g0 { background: linear-gradient(135deg,#ef4444,#dc2626); }
+    .g1 { background: linear-gradient(135deg,#3b82f6,#2563eb); }
+    .g2 { background: linear-gradient(135deg,#10b981,#059669); }
+    .g3 { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .g4 { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
+    .g5 { background: linear-gradient(135deg,#ec4899,#db2777); }
+    .gbg0 { background: #fef2f2; }
+    .gbg1 { background: #eff6ff; }
+    .gbg2 { background: #f0fdf4; }
+    .gbg3 { background: #fffbeb; }
+    .gbg4 { background: #f5f3ff; }
+    .gbg5 { background: #fdf2f8; }
+
+    .team-colors-0 { background: #1a56db; }
+    .team-colors-1 { background: #dc2626; }
+    .team-colors-2 { background: #059669; }
+    .team-colors-3 { background: #d97706; }
+    .team-colors-4 { background: #7c3aed; }
+    .team-colors-5 { background: #db2777; }
+    .team-bar-0 { background: #1a56db; }
+    .team-bar-1 { background: #dc2626; }
+    .team-bar-2 { background: #059669; }
+    .team-bar-3 { background: #d97706; }
+    .team-bar-4 { background: #7c3aed; }
+    .team-bar-5 { background: #db2777; }
+
+    .empty-state { text-align: center; padding: 3rem; color: var(--muted); grid-column: 1/-1; font-size: .9rem; }
+    @media(max-width:640px){ input[type="number"]{ width:42px; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏐 Vôlei 4×4 — Sorteio de Times</h1>
+  <p>6 times · 24 atletas · 6 potes por fundamento · Nivelamento automático</p>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="notas" onclick="showTab('notas')">📝 Notas</button>
+    <button class="tab-btn" data-tab="potes" onclick="showTab('potes')">🎯 Potes</button>
+    <button class="tab-btn" data-tab="times" onclick="showTab('times')">🏆 Times</button>
+  </div>
+
+  <!-- ══ TAB NOTAS ══ -->
+  <div id="tab-notas" class="tab-panel active">
+    <div class="card">
+      <div class="card-title">📊 Avaliação dos Atletas</div>
+      <div class="card-subtitle">
+        Avalie cada atleta de <strong>1 a 10</strong> em cada fundamento.<br>
+        <strong>Nota Ponderada</strong> = (Ataque×2 + Levantamento×2 + Defesa×1 + Passe×1 + Bloqueio×1 + Saque×0,5) ÷ 7,5
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Atleta</th>
+              <th><div class="lbl-fund">Ataque<span class="weight-tag">×2</span></div></th>
+              <th><div class="lbl-fund">Levantamento<span class="weight-tag">×2</span></div></th>
+              <th><div class="lbl-fund">Defesa<span class="weight-tag">×1</span></div></th>
+              <th><div class="lbl-fund">Passe<span class="weight-tag">×1</span></div></th>
+              <th><div class="lbl-fund">Bloqueio<span class="weight-tag">×1</span></div></th>
+              <th><div class="lbl-fund">Saque<span class="weight-tag">×0,5</span></div></th>
+              <th>Nota Ponderada</th>
+            </tr>
+          </thead>
+          <tbody id="score-body"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="fillRandom()">🎲 Preencher aleatório (demo)</button>
+        <button class="btn btn-primary" onclick="calculate()">⚡ Calcular & Sortear Times</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB POTES ══ -->
+  <div id="tab-potes" class="tab-panel">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-subtitle" style="margin:0">
+        Cada <strong>Pote</strong> reúne os <strong>4 atletas</strong> mais destacados no fundamento correspondente que ainda não foram alocados em potes anteriores (prioridade: Ataque → Levantamento → Defesa → Passe → Bloqueio → Saque). O mesmo atleta nunca aparece em dois potes.
+      </div>
+    </div>
+    <div class="grid2" id="pots-grid">
+      <div class="empty-state">Calcule as notas para ver os potes.</div>
+    </div>
+  </div>
+
+  <!-- ══ TAB TIMES ══ -->
+  <div id="tab-times" class="tab-panel">
+    <div id="balance-bar" class="balance-bar" style="display:none"></div>
+    <div class="actions" style="margin-bottom:1rem">
+      <button class="btn btn-success" onclick="reshuffle()">🔀 Novo Sorteio</button>
+      <span style="font-size:.8rem;color:var(--muted);align-self:center">Reatribui os times mantendo as notas atuais</span>
+    </div>
+    <div class="grid2" id="teams-grid">
+      <div class="empty-state">Calcule as notas para ver os times.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── Data ───────────────────────────────────────────────────────────────────
+const PLAYERS = [
+  { name:'INGRA',    gender:'F' },
+  { name:'PATRICIA', gender:'F' },
+  { name:'THAIS',    gender:'F' },
+  { name:'ELDA',     gender:'F' },
+  { name:'MILENA',   gender:'F' },
+  { name:'MARIA',    gender:'F' },
+  { name:'MATHEUS',  gender:'M' },
+  { name:'DOUGLAS',  gender:'M' },
+  { name:'THIAGO',   gender:'M' },
+  { name:'LIND',     gender:'M' },
+  { name:'KELVIS',   gender:'M' },
+  { name:'JOÃO',     gender:'M' },
+  { name:'RAMON',    gender:'M' },
+  { name:'TON',      gender:'M' },
+  { name:'ELIAS',    gender:'M' },
+  { name:'MAURICIO', gender:'M' },
+  { name:'RYAN',     gender:'M' },
+  { name:'ROBERTO',  gender:'M' },
+  { name:'FRANKMAR', gender:'M' },
+  { name:'WARLLEY',  gender:'M' },
+  { name:'MARCELO',  gender:'M' },
+  { name:'JAN',      gender:'M' },
+  { name:'FEIJÓ',    gender:'M' },
+  { name:'FABRICIO', gender:'M' },
+];
+
+const FUNDS = [
+  { key:'attack',  name:'Ataque',       weight:2,   gi:0 },
+  { key:'setting', name:'Levantamento', weight:2,   gi:1 },
+  { key:'defense', name:'Defesa',       weight:1,   gi:2 },
+  { key:'pass',    name:'Passe',        weight:1,   gi:3 },
+  { key:'block',   name:'Bloqueio',     weight:1,   gi:4 },
+  { key:'serve',   name:'Saque',        weight:0.5, gi:5 },
+];
+
+const TOTAL_W = FUNDS.reduce((s,f) => s + f.weight, 0); // 7.5
+
+const POT_NAMES = ['Ataque','Levantamento','Defesa','Passe','Bloqueio','Saque'];
+const TEAM_HEX  = ['#1a56db','#dc2626','#059669','#d97706','#7c3aed','#db2777'];
+
+let ready = false;
+
+// ─── Table ───────────────────────────────────────────────────────────────────
+function buildTable() {
+  const tbody = document.getElementById('score-body');
+  PLAYERS.forEach(p => {
+    const tr = document.createElement('tr');
+    const gc = p.gender === 'F' ? 'var(--female)' : 'var(--male)';
+    const bc = p.gender === 'F' ? 'badge-f' : 'badge-m';
+    let html = `<td><span style="color:${gc};font-weight:700">${p.name}</span><span class="badge ${bc}">${p.gender}</span></td>`;
+    FUNDS.forEach(f => {
+      html += `<td><input type="number" min="1" max="10" value="5"
+        id="s-${p.name}-${f.key}"
+        oninput="onScoreInput('${p.name}')"></td>`;
+    });
+    html += `<td class="ws-cell" id="ws-${p.name}">—</td>`;
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+
+function readScore(name, key) {
+  const el = document.getElementById(`s-${name}-${key}`);
+  if (!el) return 5;
+  return Math.min(10, Math.max(1, parseFloat(el.value) || 1));
+}
+
+function calcWS(scores) {
+  return FUNDS.reduce((s,f) => s + scores[f.key] * f.weight, 0) / TOTAL_W;
+}
+
+function onScoreInput(name) {
+  if (!ready) return;
+  const scores = {};
+  FUNDS.forEach(f => scores[f.key] = readScore(name, f.key));
+  const ws = calcWS(scores);
+  const el = document.getElementById(`ws-${name}`);
+  if (el) el.textContent = ws.toFixed(2);
+}
+
+function fillRandom() {
+  PLAYERS.forEach(p => {
+    FUNDS.forEach(f => {
+      const el = document.getElementById(`s-${p.name}-${f.key}`);
+      if (el) el.value = Math.floor(Math.random() * 10) + 1;
+    });
+  });
+  if (ready) calculate(false);
+}
+
+function getAll() {
+  return PLAYERS.map(p => {
+    const scores = {};
+    FUNDS.forEach(f => scores[f.key] = readScore(p.name, f.key));
+    return { ...p, scores, ws: calcWS(scores) };
+  });
+}
+
+// ─── Pots ────────────────────────────────────────────────────────────────────
+function assignPots(players) {
+  // For each player rank them in each fundamental
+  const rankMap = {};
+  players.forEach(p => rankMap[p.name] = {});
+  FUNDS.forEach(f => {
+    const sorted = [...players].sort((a,b) => b.scores[f.key] - a.scores[f.key]);
+    sorted.forEach((p,i) => rankMap[p.name][f.key] = i + 1);
+  });
+
+  const pots = FUNDS.map(f => ({ fund: f, players: [] }));
+  const unassigned = new Set(players.map(p => p.name));
+
+  // Iteratively: pick the unassigned player with the best rank in any non-full pot
+  while (unassigned.size > 0) {
+    let bestPlayer = null, bestPotIdx = -1, bestRank = Infinity;
+    players.forEach(p => {
+      if (!unassigned.has(p.name)) return;
+      FUNDS.forEach((f, fi) => {
+        if (pots[fi].players.length >= 4) return;
+        const r = rankMap[p.name][f.key];
+        if (r < bestRank) { bestRank = r; bestPlayer = p; bestPotIdx = fi; }
+      });
+    });
+    if (!bestPlayer) break;
+    unassigned.delete(bestPlayer.name);
+    pots[bestPotIdx].players.push({
+      ...bestPlayer,
+      fundScore: bestPlayer.scores[FUNDS[bestPotIdx].fund.key]
+    });
+  }
+
+  // Sort each pot by its fundamental score desc
+  pots.forEach((pot,i) => {
+    pot.players.sort((a,b) => b.scores[FUNDS[i].key] - a.scores[FUNDS[i].key]);
+    pot.players.forEach(p => p.potIdx = i);
+  });
+
+  return pots;
+}
+
+// ─── Teams ───────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildTeams(players, pots) {
+  // Build pot lookup for display
+  const potOf = {};
+  pots.forEach((pot,pi) => pot.players.forEach(p => potOf[p.name] = pi));
+
+  const women = players.filter(p => p.gender === 'F');
+  const men   = [...players.filter(p => p.gender === 'M')].sort((a,b) => b.ws - a.ws);
+
+  const teams = Array.from({length:6}, (_,i) => ({
+    id: i+1, players: [], total: 0, avg: 0
+  }));
+
+  // Random woman-to-team assignment
+  const shuffledWomen = shuffle(women);
+  shuffledWomen.forEach((w,i) => {
+    teams[i].players.push({ ...w, potIdx: potOf[w.name] ?? -1 });
+    teams[i].total += w.ws;
+  });
+
+  // Greedy men assignment: best available man → weakest team
+  men.forEach(man => {
+    const t = teams.reduce((best,t) => t.total < best.total ? t : best);
+    t.players.push({ ...man, potIdx: potOf[man.name] ?? -1 });
+    t.total += man.ws;
+  });
+
+  teams.forEach(t => t.avg = t.total / t.players.length);
+  return teams;
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function renderPots(pots) {
+  const grid = document.getElementById('pots-grid');
+  grid.innerHTML = '';
+  pots.forEach((pot,i) => {
+    const div = document.createElement('div');
+    div.className = 'pot-card';
+    const rows = pot.players.map((p,ri) => {
+      const bc = p.gender === 'F' ? 'badge-f' : 'badge-m';
+      return `<div class="pot-row gbg${i}">
+        <div class="pot-row-left">
+          <span class="rank-dot g${i}" style="color:#fff">${ri+1}</span>
+          <span style="color:#1e293b;font-weight:700">${p.name}</span>
+          <span class="badge ${bc}">${p.gender}</span>
+        </div>
+        <span style="font-weight:800;color:#1e293b">${p.scores[pot.fund.key]}<span style="font-size:.7rem;color:#64748b;font-weight:400">/10</span></span>
+      </div>`;
+    }).join('');
+    div.innerHTML = `
+      <div class="pot-head g${i}">
+        <div class="pot-title">
+          <span class="pot-num">${i+1}</span>
+          Pote ${i+1} — ${pot.fund.name}
+        </div>
+        <span class="pot-weight">×${pot.fund.weight}</span>
+      </div>
+      ${rows}`;
+    grid.appendChild(div);
+  });
+}
+
+function renderTeams(teams) {
+  const avgs  = teams.map(t => t.avg);
+  const mean  = avgs.reduce((a,b) => a+b,0) / avgs.length;
+  const variance = avgs.reduce((s,v) => s + (v-mean)**2, 0) / avgs.length;
+  const std   = Math.sqrt(variance);
+  const diff  = Math.max(...avgs) - Math.min(...avgs);
+  const qual  = std < 0.15 ? ['Excelente','var(--success)'] : std < 0.35 ? ['Bom','var(--warn)'] : ['Regular','var(--danger)'];
+  const maxAvg = Math.max(...avgs);
+
+  const bb = document.getElementById('balance-bar');
+  bb.style.display = 'flex';
+  bb.innerHTML = `
+    <div class="b-stat"><label>Média Geral</label><span>${mean.toFixed(2)}</span></div>
+    <div class="b-stat"><label>Desvio Padrão</label><span>${std.toFixed(3)}</span></div>
+    <div class="b-stat"><label>Diferença Máx–Mín</label><span>${diff.toFixed(3)}</span></div>
+    <div class="b-stat"><label>Nivelamento</label><span style="color:${qual[1]}">${qual[0]}</span></div>
+  `;
+
+  const grid = document.getElementById('teams-grid');
+  grid.innerHTML = '';
+  teams.forEach((team,i) => {
+    const barW = maxAvg > 0 ? (team.avg / maxAvg * 100).toFixed(1) : 0;
+    const rows = team.players.map(p => {
+      const bc = p.gender === 'F' ? 'badge-f' : 'badge-m';
+      const potLabel = p.potIdx >= 0 ? `Pote ${p.potIdx+1} · ${POT_NAMES[p.potIdx]}` : '';
+      return `<div class="team-player-row">
+        <div class="tpr-left">
+          <span class="badge ${bc}">${p.gender}</span>
+          <div>
+            <div class="tpr-name">${p.name}</div>
+            <div class="tpr-pot">${potLabel}</div>
+          </div>
+        </div>
+        <span class="tpr-score">${p.ws.toFixed(2)}</span>
+      </div>`;
+    }).join('');
+    const div = document.createElement('div');
+    div.className = 'team-card';
+    div.innerHTML = `
+      <div class="team-head team-colors-${i}">
+        <span class="team-name-txt">Time ${team.id}</span>
+        <span class="team-avg-txt">Média: ${team.avg.toFixed(2)}</span>
+      </div>
+      <div class="team-bar-wrap"><div class="team-bar-fill team-bar-${i}" style="width:${barW}%"></div></div>
+      ${rows}`;
+    grid.appendChild(div);
+  });
+}
+
+// ─── Main actions ─────────────────────────────────────────────────────────────
+let _lastPots = null;
+
+function calculate(switchTab = true) {
+  ready = true;
+  const players = getAll();
+
+  // Update WS column
+  players.forEach(p => {
+    const el = document.getElementById(`ws-${p.name}`);
+    if (el) el.textContent = p.ws.toFixed(2);
+  });
+
+  const pots = assignPots(players);
+  _lastPots = pots;
+  renderPots(pots);
+
+  const teams = buildTeams(players, pots);
+  renderTeams(teams);
+
+  if (switchTab) showTab('potes');
+}
+
+function reshuffle() {
+  if (!ready) { alert('Calcule as notas primeiro.'); return; }
+  const players = getAll();
+  const pots = _lastPots || assignPots(players);
+  renderTeams(buildTeams(players, pots));
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+buildTable();
+</script>
+</body>
+</html>
