@@ -360,7 +360,7 @@ function assignPots(players) {
     unassigned.delete(bestPlayer.name);
     pots[bestPotIdx].players.push({
       ...bestPlayer,
-      fundScore: bestPlayer.scores[FUNDS[bestPotIdx].fund.key]
+      fundScore: bestPlayer.scores[FUNDS[bestPotIdx].key]
     });
   }
 
