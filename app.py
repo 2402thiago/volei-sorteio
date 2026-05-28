@@ -116,6 +116,18 @@ def get_all_players():
 
 def on_score_input():
     st.session_state.last_pots = None
+    st.session_state.scores_saved = False
+
+
+def save_current_scores():
+    if sh is None:
+        return False
+    players = get_all_players()
+    ok = save_scores_to_sheets(sh, players)
+    if ok:
+        st.session_state.scores_saved = True
+        return True
+    return False
 
 
 # ─────────────────────────────────────────────
@@ -262,14 +274,22 @@ elif st.session_state.tab == "notas":
             st.markdown(f"### {gender_icon} **{p.name}**")
             st.progress((idx + 1) / len(players), text=f"Atleta {idx + 1} de {len(players)}")
         with nav_col:
-            c_prev, c_next = st.columns(2)
+            c_prev, c_next, c_save = st.columns([1, 1, 1])
             with c_prev:
-                if st.button("◀ Anterior", use_container_width=True, disabled=(idx == 0)):
+                if st.button("◀", use_container_width=True, disabled=(idx == 0)):
+                    save_current_scores()
                     st.session_state.nota_idx = max(0, idx - 1)
                     st.rerun()
             with c_next:
-                if st.button("Próximo ▶", use_container_width=True, disabled=(idx == len(players) - 1)):
+                if st.button("▶", use_container_width=True, disabled=(idx == len(players) - 1)):
+                    save_current_scores()
                     st.session_state.nota_idx = min(len(players) - 1, idx + 1)
+                    st.rerun()
+            with c_save:
+                saved = st.session_state.get("scores_saved", False)
+                btn_label = "💾" if saved else "💾 Salvar"
+                if st.button(btn_label, use_container_width=True, type="secondary" if not saved else "primary"):
+                    save_current_scores()
                     st.rerun()
 
         with st.container(border=True):
@@ -312,9 +332,11 @@ elif st.session_state.tab == "notas":
                     for f in FUNDS:
                         skey = f"score_{p.name}_{f['key']}"
                         st.session_state[skey] = random.randint(1, 10)
+                    save_current_scores()
                     st.rerun()
             with c2:
                 if st.button("⚡ Potes & Times", use_container_width=True, type="primary"):
+                    save_current_scores()
                     st.session_state.tab = "potes"
                     st.rerun()
 
