@@ -269,6 +269,19 @@ elif st.session_state.tab == "notas":
         p = players[idx]
         gender_icon = "♀" if p.gender == "F" else "⚦"
 
+        sel_name = st.selectbox(
+            "Ir para atleta:",
+            options=[pp.name for pp in players],
+            index=idx,
+            key="notas_selector",
+            label_visibility="collapsed",
+            placeholder="Buscar atleta...",
+        )
+        if sel_name != p.name:
+            save_current_scores()
+            st.session_state.nota_idx = next(i for i, pp in enumerate(players) if pp.name == sel_name)
+            st.rerun()
+
         progress_col, nav_col = st.columns([2, 1])
         with progress_col:
             st.markdown(f"### {gender_icon} **{p.name}**")
@@ -340,22 +353,7 @@ elif st.session_state.tab == "notas":
                     st.session_state.tab = "potes"
                     st.rerun()
 
-        st.divider()
-        with st.expander("📐 Nivelamento"):
-            ref_name = st.selectbox(
-                "Copiar notas de:",
-                options=[pp.name for pp in players],
-                key="nivelamento_ref",
-            )
-            if st.button("Aplicar para todos", type="primary", use_container_width=True):
-                for pp in players:
-                    for f in FUNDS:
-                        skey = f"score_{pp.name}_{f['key']}"
-                        ref_skey = f"score_{ref_name}_{f['key']}"
-                        st.session_state[skey] = st.session_state.get(ref_skey, 5)
-                save_current_scores()
-                st.success(f"Notas de **{ref_name}** copiadas para todos!")
-                st.rerun()
+
 
 # ─────────────────────────────────────────────
 # TAB: POTES
