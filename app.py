@@ -5,7 +5,7 @@ import streamlit as st
 from logic import Player, FUNDS, TOTAL_WEIGHT, POT_NAMES, assign_pots, build_teams, NUM_TEAMS
 from gsheets_db import (
     init_gsheets,
-    init_sheets_structure,
+    get_or_create_sheets,
     disconnect_gsheets,
     load_players_from_sheets,
     save_players_to_sheets,
@@ -71,7 +71,7 @@ if has_secrets and not st.session_state.get("gsheets_no_auto"):
     try:
         sh = init_gsheets()
         if sh is not None:
-            init_sheets_structure(sh)
+            get_or_create_sheets(sh)
             loaded = load_players_from_sheets(sh)
             if loaded:
                 db_scores = load_scores_from_sheets(sh)

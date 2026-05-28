@@ -14,13 +14,20 @@ def get_sheet_by_name(sh, name):
         return sh.add_worksheet(title=name, rows=100, cols=20)
 
 
-def init_sheets_structure(sh):
-    """Create all required worksheets if they don't exist."""
+def get_or_create_sheets(sh):
+    """Ensure required worksheets exist using a single metadata call."""
+    existing = {ws.title for ws in sh.worksheets()}
     for sheet_name in ["atletas", "notas", "historico"]:
-        try:
-            get_sheet_by_name(sh, sheet_name)
-        except Exception:
-            pass
+        if sheet_name not in existing:
+            sh.add_worksheet(title=sheet_name, rows=100, cols=20)
+
+
+def get_worksheet(sh, name):
+    """Get a worksheet — returns None if it doesn't exist (no API call to check)."""
+    try:
+        return sh.worksheet(name)
+    except gspread.WorksheetNotFound:
+        return None
 
 
 def init_gsheets() -> gspread.Spreadsheet | None:
@@ -59,7 +66,9 @@ def disconnect_gsheets():
 
 def load_players_from_sheets(sh) -> list[Player] | None:
     try:
-        ws = sh.worksheet("atletas")
+        ws = get_worksheet(sh, "atletas")
+        if ws is None:
+            return []
         records = ws.get_all_records()
         players = []
         for r in records:
@@ -68,8 +77,6 @@ def load_players_from_sheets(sh) -> list[Player] | None:
             if name and gender in ("M", "F"):
                 players.append(Player(name=name, gender=gender))
         return players
-    except gspread.WorksheetNotFound:
-        return []
     except Exception as e:
         st.error(f"Erro ao carregar atletas: {e}")
         return None
@@ -90,7 +97,9 @@ def save_players_to_sheets(sh, players: list[Player]) -> bool:
 
 def load_scores_from_sheets(sh) -> dict[str, dict] | None:
     try:
-        ws = sh.worksheet("notas")
+        ws = get_worksheet(sh, "notas")
+        if ws is None:
+            return {}
         records = ws.get_all_records()
         scores = {}
         for r in records:
@@ -106,8 +115,6 @@ def load_scores_from_sheets(sh) -> dict[str, dict] | None:
                 except (ValueError, TypeError):
                     scores[name][key] = 5
         return scores
-    except gspread.WorksheetNotFound:
-        return {}
     except Exception as e:
         st.error(f"Erro ao carregar notas: {e}")
         return None
