@@ -61,7 +61,12 @@ TEAM_COLORS = [
 ]
 
 sh = None
-if st.secrets and not st.session_state.get("gsheets_no_auto"):
+try:
+    has_secrets = bool(st.secrets)
+except Exception:
+    has_secrets = False
+
+if has_secrets and not st.session_state.get("gsheets_no_auto"):
     sh = init_gsheets()
     if sh is not None:
         loaded = load_players_from_sheets(sh)
