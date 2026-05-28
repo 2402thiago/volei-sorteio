@@ -5,6 +5,7 @@ import streamlit as st
 from logic import Player, FUNDS, TOTAL_WEIGHT, POT_NAMES, assign_pots, build_teams, NUM_TEAMS
 from gsheets_db import (
     init_gsheets,
+    init_sheets_structure,
     disconnect_gsheets,
     load_players_from_sheets,
     save_players_to_sheets,
@@ -69,6 +70,7 @@ except Exception:
 if has_secrets and not st.session_state.get("gsheets_no_auto"):
     sh = init_gsheets()
     if sh is not None:
+        init_sheets_structure(sh)
         loaded = load_players_from_sheets(sh)
         if loaded:
             db_scores = load_scores_from_sheets(sh)
@@ -78,6 +80,8 @@ if has_secrets and not st.session_state.get("gsheets_no_auto"):
                 if p.name in db_scores:
                     p.scores = db_scores[p.name]
             st.session_state.players = loaded
+        else:
+            save_players_to_sheets(sh, st.session_state.players)
 
 
 def tab_btn(label, key, icon=""):

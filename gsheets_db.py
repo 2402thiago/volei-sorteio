@@ -41,6 +41,12 @@ def init_gsheets() -> gspread.Spreadsheet | None:
         return None
 
 
+def init_sheets_structure(sh):
+    """Create all required worksheets if they don't exist."""
+    for sheet_name in ["atletas", "notas", "historico"]:
+        get_sheet_by_name(sh, sheet_name)
+
+
 def disconnect_gsheets():
     st.session_state.gsheets_connected = False
     st.session_state.pop("gsheets_client", None)
