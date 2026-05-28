@@ -68,23 +68,27 @@ except Exception:
     has_secrets = False
 
 if has_secrets and not st.session_state.get("gsheets_no_auto"):
-    try:
-        sh = init_gsheets()
-        if sh is not None:
-            get_or_create_sheets(sh)
-            loaded = load_players_from_sheets(sh)
-            if loaded:
-                db_scores = load_scores_from_sheets(sh)
-                if db_scores is None:
-                    db_scores = {}
-                for p in loaded:
-                    if p.name in db_scores:
-                        p.scores = db_scores[p.name]
-                st.session_state.players = loaded
-            else:
-                save_players_to_sheets(sh, st.session_state.players)
-    except Exception as e:
-        st.warning(f"Google Sheets indisponível ({e}). Dados locais serão usados.")
+    if "gsheets_initialized" not in st.session_state:
+        try:
+            sh = init_gsheets()
+            if sh is not None:
+                get_or_create_sheets(sh)
+                loaded = load_players_from_sheets(sh)
+                if loaded:
+                    db_scores = load_scores_from_sheets(sh)
+                    if db_scores is None:
+                        db_scores = {}
+                    for p in loaded:
+                        if p.name in db_scores:
+                            p.scores = db_scores[p.name]
+                    st.session_state.players = loaded
+                else:
+                    save_players_to_sheets(sh, st.session_state.players)
+                st.session_state.gsheets_initialized = True
+        except Exception as e:
+            st.warning(f"Google Sheets indisponível ({e}). Dados locais serão usados.")
+
+    sh = st.session_state.get("gsheets_client")
 
 
 def tab_btn(label, key, icon=""):
