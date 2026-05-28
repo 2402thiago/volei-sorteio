@@ -247,57 +247,73 @@ elif st.session_state.tab == "notas":
     if not players:
         st.warning("Cadastre atletas primeiro na aba 'Atletas'.")
     else:
-        cols_per_row = 4
-        rows_needed = (len(players) + cols_per_row - 1) // cols_per_row
+        if "nota_idx" not in st.session_state or st.session_state.nota_idx >= len(players):
+            st.session_state.nota_idx = 0
 
-        for row_idx in range(rows_needed):
-            cols = st.columns(cols_per_row)
-            for col_idx in range(cols_per_row):
-                p_idx = row_idx * cols_per_row + col_idx
-                if p_idx >= len(players):
-                    break
-                p = players[p_idx]
-                with cols[col_idx]:
-                    with st.container(border=True):
-                        gender_icon = "♀" if p.gender == "F" else "⚦"
-                        st.markdown(f"**{p.name}** {gender_icon}")
-                        for f in FUNDS:
-                            skey = f"score_{p.name}_{f['key']}"
-                            if skey not in st.session_state:
-                                st.session_state[skey] = 5
-                            st.session_state[skey] = st.number_input(
-                                f"{f['name']} (×{f['weight']})",
-                                min_value=1,
-                                max_value=10,
-                                value=st.session_state[skey],
-                                key=skey + "_input",
-                                on_change=on_score_input,
-                                label_visibility="collapsed",
-                                placeholder=f["name"],
-                            )
+        idx = st.session_state.nota_idx
+        p = players[idx]
+        gender_icon = "♀" if p.gender == "F" else "⚦"
 
-                        scores = {}
-                        for f in FUNDS:
-                            val = st.session_state.get(f"score_{p.name}_{f['key']}", 5)
-                            try:
-                                scores[f["key"]] = max(1, min(10, int(val)))
-                            except (ValueError, TypeError):
-                                scores[f["key"]] = 5
-                        ws = sum(scores[f["key"]] * f["weight"] for f in FUNDS) / TOTAL_WEIGHT
-                        st.metric("Média", f"{ws:.2f}")
+        progress_col, nav_col = st.columns([2, 1])
+        with progress_col:
+            st.markdown(f"### {gender_icon} **{p.name}**")
+            st.progress((idx + 1) / len(players), text=f"Atleta {idx + 1} de {len(players)}")
+        with nav_col:
+            c_prev, c_next = st.columns(2)
+            with c_prev:
+                if st.button("◀ Anterior", use_container_width=True, disabled=(idx == 0)):
+                    st.session_state.nota_idx = max(0, idx - 1)
+                    st.rerun()
+            with c_next:
+                if st.button("Próximo ▶", use_container_width=True, disabled=(idx == len(players) - 1)):
+                    st.session_state.nota_idx = min(len(players) - 1, idx + 1)
+                    st.rerun()
 
-        c1, c2 = st.columns([1, 3])
-        with c1:
-            if st.button("🎲 Preencher aleatório", use_container_width=True, type="secondary"):
-                for p in players:
+        with st.container(border=True):
+            for f in FUNDS:
+                skey = f"score_{p.name}_{f['key']}"
+                if skey not in st.session_state:
+                    st.session_state[skey] = 5
+                col_name, col_slider, col_val = st.columns([1.5, 3, 0.5])
+                with col_name:
+                    st.markdown(f"**{f['name']}**  <span style='color:#94a3b8;font-size:.8rem'>×{f['weight']}</span>", unsafe_allow_html=True)
+                with col_slider:
+                    val = st.session_state[skey]
+                    new_val = st.slider(
+                        f"{f['name']}",
+                        min_value=1, max_value=10,
+                        value=int(val),
+                        key=f"slider_{p.name}_{f['key']}",
+                        on_change=on_score_input,
+                        label_visibility="collapsed",
+                    )
+                    st.session_state[skey] = new_val
+                with col_val:
+                    st.markdown(f"<div style='text-align:center;font-size:1.25rem;font-weight:700'>{int(st.session_state[skey])}</div>", unsafe_allow_html=True)
+
+        scores = {}
+        for f in FUNDS:
+            val = st.session_state.get(f"score_{p.name}_{f['key']}", 5)
+            try:
+                scores[f["key"]] = max(1, min(10, int(val)))
+            except (ValueError, TypeError):
+                scores[f["key"]] = 5
+        ws = sum(scores[f["key"]] * f["weight"] for f in FUNDS) / TOTAL_WEIGHT
+        col_metric, col_actions = st.columns([1, 1])
+        with col_metric:
+            st.metric("Média Ponderada", f"{ws:.2f}")
+        with col_actions:
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("🎲 Aleatório", use_container_width=True, type="secondary"):
                     for f in FUNDS:
                         skey = f"score_{p.name}_{f['key']}"
                         st.session_state[skey] = random.randint(1, 10)
-                st.rerun()
-        with c2:
-            if st.button("⚡ Calcular & Ver Times", use_container_width=True, type="primary"):
-                st.session_state.tab = "potes"
-                st.rerun()
+                    st.rerun()
+            with c2:
+                if st.button("⚡ Potes & Times", use_container_width=True, type="primary"):
+                    st.session_state.tab = "potes"
+                    st.rerun()
 
 # ─────────────────────────────────────────────
 # TAB: POTES
